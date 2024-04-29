@@ -102,7 +102,7 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
 
         # Process combined features with FCN
         final = self.depth_pos_combine_fc(combined_features)
-        print("Final output: ", final.size())
+        print("Final output: ", final)
 
         print(" ")
 
@@ -122,20 +122,21 @@ class CustomCNNPolicy(BasePolicy):
             print(observations)
         self.iteration += 1  # increment the counter
 
+        # actions, values, log_probs
         return self.features_extractor(observations)
-
 
 policy_kwargs = dict(
     features_extractor_class=CustomFeatureExtractor,
     features_extractor_kwargs=dict(features_dim=9),
 )
 
+
 # Define a dummy environment for testing
 class DummyEnv(gym.Env):
     def __init__(self):
         self.observation_space = gym.spaces.Dict({
             'pos': gym.spaces.Box(low=-10, high=10, shape=(3,)),  # XYZ position
-            'depth': gym.spaces.Box(low=0, high=255, shape=(144, 144))  # Depth image
+            'depth': gym.spaces.Box(low=0, high=255, shape=(1, 144, 144))  # Depth image
         })
         self.action_space = gym.spaces.Discrete(9)  # Define the action space
 
@@ -159,6 +160,7 @@ class DummyEnv(gym.Env):
 
     def step(self, action):
         # Use the current state from the previous reset
+
         return self.state.copy(), 0, False, {}
     
     def render(self, mode='human'):
@@ -179,9 +181,13 @@ denv = DummyEnv()
 obs, _ = denv.reset()
 denv.render()
 
-print(denv.observation_space)
-print(denv.action_space)
-print(denv.action_space.sample())
+print('')
+print('ENV INFORMATION:')
+print('')
+print("Obs ",denv.observation_space)
+print("Action ",denv.action_space)
+print("Sample ",denv.action_space.sample())
+print('')
 
 # Vectorize the environment
 vec_env = make_vec_env(lambda: DummyEnv(), n_envs=1, env_kwargs=dict() )

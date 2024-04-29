@@ -58,6 +58,10 @@ class CombinedFeatureNetwork(nn.Module):
 
     def forward(self, pos, depth):
         # Process image with convolutional layers
+
+        print("Input depth: ", depth.size())
+        print("Input pos: ", pos.size())
+        
         depth_features = self.depth_conv1(depth)
         print("Output of depth_conv1: ", depth_features.size())
         
