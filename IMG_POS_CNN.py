@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
+
 class CombinedFeatureNetwork(nn.Module):
     def __init__(self):
 
@@ -11,7 +12,7 @@ class CombinedFeatureNetwork(nn.Module):
         self.depth_conv1 = nn.Sequential(
             # Assuming depth image has 1 channel
             nn.Conv2d(1, 8, kernel_size=64, stride=1),  
-            # nn.ReLU()
+            nn.ReLU()
         )
 
         self.depth_conv2 = nn.Sequential(
@@ -91,8 +92,9 @@ class CombinedFeatureNetwork(nn.Module):
         print("Final output: ", final.size())
 
         return final
+
     
-# Assuming you have a single image of size 144x144
+# # Assuming you have a single image of size 144x144
 image = torch.randn(1, 1, 144, 144)  # Depth images usually have 1 channel
 
 # And a single position
