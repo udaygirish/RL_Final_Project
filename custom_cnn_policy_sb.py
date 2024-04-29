@@ -133,10 +133,10 @@ policy_kwargs = dict(
 # Define a dummy environment for testing
 class DummyEnv(gym.Env):
     def __init__(self):
-        self.observation_space = {
-            'pos': torch.randn(1, 3),
-            'depth': torch.randn(1, 1, 144, 144)
-        }
+        self.observation_space = gym.spaces.Dict({
+            'pos': gym.spaces.Box(low=-10, high=10, shape=(3,)),  # XYZ position
+            'depth': gym.spaces.Box(low=0, high=255, shape=(144, 144))  # Depth image
+        })
         self.action_space = gym.spaces.Discrete(9)  # Define the action space
 
         # Initialize state with random values (optional)
