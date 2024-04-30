@@ -1,19 +1,17 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
 import numpy as np
 import gym
 from gym import spaces
-from IMG_POS_CNN import CombinedFeatureNetwork
+
 from stable_baselines3.common.policies import BasePolicy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.env_util import make_vec_env
 
 from stable_baselines3 import A2C
-import torch
-import torch.nn as nn
-import numpy as np
 
-import gym
-import torch.nn as nn
     
 class CustomFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: spaces.Box, features_dim: int = 9):
@@ -72,38 +70,38 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
         print("Input pos: ", pos.size())
         
         depth_features = self.depth_conv1(depth)
-        print("Output of depth_conv1: ", depth_features.size())
+        print("Output of depth_conv1:  ", depth_features.size())
         
         depth_features = self.depth_conv2(depth_features)
-        print("Output of depth_conv2: ", depth_features.size())
+        print("Output of depth_conv2:  ", depth_features.size())
         
         depth_features = self.depth_conv3(depth_features)
-        print("Output of depth_conv3: ", depth_features.size())
+        print("Output of depth_conv3:  ", depth_features.size())
 
         depth_features = self.depth_conv4(depth_features)
-        print("Output of depth_conv4: ", depth_features.size())
+        print("Output of depth_conv4:  ", depth_features.size())
 
         depth_features = self.depth_conv5(depth_features)
-        print("Output of depth_conv5: ", depth_features.size())
+        print("Output of depth_conv5:  ", depth_features.size())
         
         depth_features = depth_features = depth_features.view(depth_features.size(0), -1)
         print("Output of depth_serial: ", depth_features.size())
         
         depth_features = self.depth_fc1(depth_features)
-        print("Output of depth_fc1: ", depth_features.size())
+        print("Output of depth_fc1:    ", depth_features.size())
 
         # Process relative XYZ position with FCN
         position_features = self.pos_fc(pos)
-        print("Output of pos_fc: ", position_features.size())
+        print("Output of pos_fc:       ", position_features.size())
 
         # Combine features
         combined_features = torch.cat([depth_features, position_features], dim=1)
-        print("Combined features: ", combined_features.size())
+        print("Combined features:      ", combined_features.size())
 
         # Process combined features with FCN
         final = self.depth_pos_combine_fc(combined_features)
+        print(" ")
         print("Final output: ", final)
-
         print(" ")
 
         return final
@@ -114,22 +112,37 @@ class CustomCNNPolicy(BasePolicy):
         self.features_extractor = CustomFeatureExtractor(self.observation_space)
         self.iteration = 0
 
+        self.optimizer = optim.Adam(self.parameters())
+
     def _predict(self, observation: torch.Tensor | torch.Dict[str, torch.Tensor], deterministic: bool = False) -> torch.Tensor:
-        return super()._predict(observation, deterministic)
+        return self.predict_values(observation)
+    
+    def predict_values(self, observations: torch.Tensor) -> torch.Tensor:
+        # Predict the value function for the given observations
+        # For now, return a dummy tensor
+        dummy_values = torch.tensor([0.0])
+        return dummy_values
+    
+    def evaluate_actions(self, observations: torch.Tensor, actions: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        # Evaluate the given actions under the current policy
+        # For now, return dummy tensors
+        dummy_values = torch.tensor([0.0])
+        dummy_log_prob = torch.tensor([0.0])
+        dummy_entropy = torch.tensor([0.0])
+        return dummy_values, dummy_log_prob, dummy_entropy
     
     def forward(self, observations: torch.Tensor) -> torch.Tensor:
-        if self.iteration == 0:  # if it's the second iteration (0-indexed)
-            print(observations)
-        self.iteration += 1  # increment the counter
-
         # actions, values, log_probs
-        return self.features_extractor(observations)
-
-policy_kwargs = dict(
-    features_extractor_class=CustomFeatureExtractor,
-    features_extractor_kwargs=dict(features_dim=9),
-)
-
+        values = torch.zeros((5), requires_grad=True)  # Change the size to [5]
+        log_probs = torch.zeros((5), requires_grad=True)  # Change the size to [5]
+        
+        actions = self.features_extractor(observations).transpose(0, 1)[0]  # Select the first value from the tensor
+        
+        print(values)
+        print(log_probs)
+        print(actions)
+    
+        return actions, values, log_probs
 
 # Define a dummy environment for testing
 class DummyEnv(gym.Env):
@@ -162,7 +175,7 @@ class DummyEnv(gym.Env):
         # Use the current state from the previous reset
 
         return self.state.copy(), 0, False, {}
-    
+
     def render(self, mode='human'):
         pass  # No rendering for this dummy environment
 
@@ -178,9 +191,6 @@ class DummyEnv(gym.Env):
 # Create an instance of the dummy environment
 denv = DummyEnv()
 
-obs, _ = denv.reset()
-denv.render()
-
 print('')
 print('ENV INFORMATION:')
 print('')
@@ -190,9 +200,14 @@ print("Sample ",denv.action_space.sample())
 print('')
 
 # Vectorize the environment
-vec_env = make_vec_env(lambda: DummyEnv(), n_envs=1, env_kwargs=dict() )
+vec_env = make_vec_env(lambda: DummyEnv(), n_envs = 1, env_kwargs=dict() )
+
+policy_kwargs = dict(
+    features_extractor_class=CustomFeatureExtractor,
+    features_extractor_kwargs=dict(features_dim=9),
+)
 
 # Create the model with the vectorized environment and the custom policy
 model = A2C(policy=CustomCNNPolicy, env=vec_env, policy_kwargs=policy_kwargs, verbose=1)
-model.learn(10)
+model.learn(1000)
 
