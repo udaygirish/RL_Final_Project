@@ -9,7 +9,11 @@ class AirSimEnv(gym.Env):
     metadata = {"render.modes": ["rgb_array"]}
 
     def __init__(self, image_shape):
-        self.observation_space = spaces.Box(0, 255, shape=image_shape, dtype=np.uint8)
+        #self.observation_space = spaces.Box(0, 255, shape=image_shape, dtype=np.uint8)
+        self.observation_space =  spaces.Dict({
+            "image": spaces.Box(low=0, high=255, shape=image_shape, dtype=np.uint8),
+            "position": spaces.Box(-np.inf, np.inf, shape=(3,), dtype=np.float32),
+        })
         self.viewer = None
 
     def __del__(self):

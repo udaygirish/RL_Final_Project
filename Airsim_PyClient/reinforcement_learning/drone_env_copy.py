@@ -38,7 +38,7 @@ class AirSimDroneEnv(AirSimEnv):
 
         # Define the start and goal states
         self.startState = np.array([0, 0, 0])
-        self.goalState = np.array([115, -15, -6]) #([110, -50, 10])
+        self.goalState = np.array([110, -15, -12]) #([110, -50, 10])
 
         # # Define the Points on the path
         # distance = np.linalg.norm(self.goalState - self.startState)
@@ -101,12 +101,8 @@ class AirSimDroneEnv(AirSimEnv):
 
         temp_curr_position = np.array([self.state["position"].x_val, self.state["position"].y_val, self.state["position"].z_val])
         relative_position = temp_curr_position - self.startState
-        #relative_position = relative_position.reshape(1, 3)
-        # # Shuffling the image to (1, 84, 84)
-        # image = image.reshape(84, 84, 1)
-
-        observation = {"image": image, "position": relative_position}
-        return observation
+        relative_position = relative_position.reshape(1, 3)
+        return image
     
     def _do_action(self, action):
         quad_offset = self.interpret_action(action)

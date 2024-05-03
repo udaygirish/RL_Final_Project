@@ -11,7 +11,6 @@ from stable_baselines3.common.callbacks import EvalCallback, CheckpointCallback,
 
 import imageio
 import numpy as np
-from airgym.envs.custom_policy_sb import CustomCombinedExtractor
 
 
 CHECKPOINT_PATH = "./models/dqn_airsim_drone_policy.zip"
@@ -22,31 +21,21 @@ env = DummyVecEnv(
             gym.make(
                 "airgym:airsim-drone-sample-v0",
                 ip_address="127.0.0.1",
-                step_length=0.4,
+                step_length=0.5,
                 image_shape=(84, 84, 1),
             )
         )
     ]
 )
 
-policy_kwargs = dict(
-    features_extractor_class=CustomCombinedExtractor,
-)
-
-
-
-print("Creating Custom Policy")
-
 # airgym:airsim-drone-sample-v0
 # Wrap env as VecTransposeImage to allow SB to handle frame observations
 env = VecTransposeImage(env)
 
 # Initialize RL algorithm type and parameters
-#"CnnPolicy"
 model = DQN(
-    "MultiInputPolicy",
+    "CnnPolicy",
     env,
-    policy_kwargs=policy_kwargs,
     learning_rate=0.0005,  # Increased learning rate
     verbose=1,
     batch_size=32,
@@ -62,18 +51,12 @@ model = DQN(
     seed = 42
 )
 
-print("====================================="*5)
-print("MODEL CREATED")
-print("MODEL ARCHITECTURE: ", model.policy)
-print("====================================="*5)
-
-print("MODEL TRAINING")
 
 # Load checkpoint
 CHECKPOINT_PATH = None
 if CHECKPOINT_PATH is not None:
     print("Loaded Pretrained Checkpoints")
-    model = DQN.load(CHECKPOINT_PATH, env=env)
+    model.load(CHECKPOINT_PATH)
 
 # Create an evaluation callback with the same env, called every 10000 iterations
 callbacks = []
