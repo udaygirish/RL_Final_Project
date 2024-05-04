@@ -31,11 +31,40 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
             if key == "image":
                 # We will just downsample one channel of the image by 4x4 and flatten.
                 # Assume the image is single-channel (subspace.shape[0] == 0)
-                extractors[key] = nn.Sequential(nn.MaxPool2d(4), nn.Flatten())
-                total_concat_size += subspace.shape[1] // 4 * subspace.shape[2] // 4
+                # extractors[key] = nn.Sequential(nn.Conv2d(subspace.shape[0], 16, 8, 4), nn.ReLU(),
+                #                                 nn.Conv2d(16, 32, 4, 2), nn.ReLU(),
+                #                                 nn.MaxPool2d(4), 
+                #                                 nn.Conv2d(32, 64, 3, 1), nn.ReLU(),
+                #                                 nn.Flatten(),
+                #                                 nn.Linear(64 * 4 * 4, 256), nn.ReLU()
+                #                                 )
+                # Network Input Size = 84*84
+                extractors[key] = nn.Sequential(
+                            nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1),
+                            nn.ReLU(),
+                            nn.MaxPool2d(2, 2),  # Output shape: [32, 8, 42, 42]
+                            nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1),
+                            nn.ReLU(),
+                            nn.MaxPool2d(2, 2),  # Output shape: [32, 16, 21, 21]
+                            nn.Flatten(),  # Output shape: [32, 16 * 21 * 21],
+                            nn.Linear(16 * 21 * 21, 64),
+                            nn.ReLU(),
+                            nn.Linear(64, 32),
+                            nn.ReLU(),
+                            # nn.Linear(32, 16),
+                            # nn.ReLU(),
+                        )
+                total_concat_size += 32
+
             elif key == "position":
                 # Run through a simple MLP
-                extractors[key] = nn.Linear(subspace.shape[0], 16)
+                extractors[key] = nn.Sequential(
+            nn.Linear(3, 8),  # Adjust input size to match the input shape (32, 3)
+            nn.ReLU(),
+            nn.Linear(8, 16),
+            nn.ReLU(),
+            nn.Flatten()  # Reshape the output
+        )
                 total_concat_size += 16
 
         self.extractors = nn.ModuleDict(extractors)
@@ -44,11 +73,12 @@ class CustomCombinedExtractor(BaseFeaturesExtractor):
         self._features_dim = total_concat_size
 
     def forward(self, observations) -> th.Tensor:
-        encoded_tensor_list = []
+        encoded_tensor_list = []           
         # self.extractors contain nn.Modules that do all the processing.
         for key, extractor in self.extractors.items():
             encoded_tensor_list.append(extractor(observations[key]))
         # Return a (B, self._features_dim) PyTorch tensor, where B is batch dimension.
+        print("Using Custom Combined Extractor")
         return th.cat(encoded_tensor_list, dim=1)
     
     

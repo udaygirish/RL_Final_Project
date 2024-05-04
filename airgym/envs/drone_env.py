@@ -38,7 +38,7 @@ class AirSimDroneEnv(AirSimEnv):
 
         # Define the start and goal states
         self.startState = np.array([0, 0, 0])
-        self.goalState = np.array([115, -15, -6]) #([110, -50, 10])
+        self.goalState = np.array([112, -10, -4]) #([110, -50, 10])
 
         # # Define the Points on the path
         # distance = np.linalg.norm(self.goalState - self.startState)
@@ -75,6 +75,10 @@ class AirSimDroneEnv(AirSimEnv):
         #print("Im in Move to position - Velocity")
         self.drone.moveByVelocityAsync(0, 0, 0, 2).join()
         self.startState = np.array([0, 0, 5])
+
+        # self.drone.moveToPositionAsync(115, 10, -6, 2).join()
+        # #print("Im in Move to position - Velocity")
+        # self.drone.moveByVelocityAsync(0, 0, 0, 2).join()
 
     def transform_obs(self, responses):
         img1d = np.array(responses[0].image_data_float, dtype=np.float32)
@@ -115,7 +119,7 @@ class AirSimDroneEnv(AirSimEnv):
             quad_vel.x_val + quad_offset[0],
             quad_vel.y_val + quad_offset[1],
             quad_vel.z_val + quad_offset[2],
-            7,
+            5,
         ).join()
 
     def calculate_rewards(self):
