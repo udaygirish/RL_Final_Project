@@ -1,7 +1,9 @@
 # RL_Final_Project
 RBE 595 RL Project - Quadrotor on Airsim with RL and Vision
 
+## Sample Output
 
+![Sample Output](./Videos/Final_Output_Obstacle.gif)
 
 ## Current Motion Primitives - Base
 
